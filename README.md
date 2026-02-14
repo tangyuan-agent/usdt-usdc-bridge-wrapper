@@ -25,6 +25,7 @@ OFT=$OFT_POL forge script script/Deploy.s.sol \
 # Deploy to Conflux
 OFT=$OFT_CFX forge script script/Deploy.s.sol \
   --rpc-url $RPC_CFX --private-key $PK_TEST1 --broadcast --verify \
+  --gas-estimate-multiplier 200 \
   --etherscan-api-key $ETHERSCAN_API
 ```
 
@@ -70,7 +71,7 @@ TO=$OWNER_ADDRESS        # Recipient on destination chain
 REFUND=$OWNER_ADDRESS    # Refund address for excess gas
 
 cast send $WRAPPER_POL \
-  "transfer(uint256,uint32,address,address)" \
+  "bridge(uint256,uint32,address,address)" \
   $AMOUNT $DST_EID $TO $REFUND \
   --value 2ether \
   --private-key $PK_TEST1 \
