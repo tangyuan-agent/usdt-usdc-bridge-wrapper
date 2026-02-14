@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Packages
+node_modules
+lib
+
+# Data
+data/
+
+# Cache
+artifact/
+cache/
+out/
+broadcast/
