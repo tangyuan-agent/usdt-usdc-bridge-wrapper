@@ -2,12 +2,17 @@
 pragma solidity ^0.8.20;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IOFT, SendParam, MessagingFee, MessagingReceipt} from "./interfaces/IOFT.sol";
 
-/// @title L0Transfer - One-click LayerZero OFT cross-chain transfer
+/// @title L0BridgeWrapper - One-click LayerZero OFT cross-chain bridge (UUPS upgradeable)
 /// @notice Wraps quoteSend + send into a single call
-contract L0Transfer {
-    IOFT public immutable oft;
+/// @dev Works with OFTAdapter (locks underlying token) — not a native OFT (burn/mint)
+contract L0BridgeWrapper is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+    IOFT public oft;
+    IERC20 public token; // underlying ERC20 that the OFTAdapter wraps
 
     // Default extra options (OptionsType V3, no extra config)
     bytes constant DEFAULT_EXTRA_OPTIONS = hex"0003";
@@ -18,17 +23,26 @@ contract L0Transfer {
     error InsufficientMsgValue(uint256 required, uint256 provided);
     error NativeRefundFailed();
 
-    constructor(address _oft) {
-        oft = IOFT(_oft);
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
-    /// @notice One-click cross-chain OFT transfer
+    function initialize(address _oft, address _owner) external initializer {
+        __Ownable_init(_owner);
+        oft = IOFT(_oft);
+        token = IERC20(IOFT(_oft).token());
+        // Max-approve the OFTAdapter so send() can pull tokens from this contract
+        token.approve(_oft, type(uint256).max);
+    }
+
+    /// @notice One-click cross-chain OFT bridge
     /// @param amount Amount of tokens to send (in local decimals, e.g. 6 for USDT0)
     /// @param dstEid Destination LayerZero endpoint ID (e.g. 30110 for Arbitrum)
     /// @param to Recipient address on the destination chain
     /// @param refundAddress Address to receive excess native gas refund
     /// @return guid The unique message identifier for tracking on LayerZero explorer
-    function transfer(
+    function bridge(
         uint256 amount,
         uint32 dstEid,
         address to,
@@ -52,13 +66,13 @@ contract L0Transfer {
             revert InsufficientMsgValue(fee.nativeFee, msg.value);
         }
 
-        // Step 2: Pull OFT tokens from sender
+        // Step 2: Pull underlying token from sender to this contract
         require(
-            IERC20(address(oft)).transferFrom(msg.sender, address(this), amount),
+            token.transferFrom(msg.sender, address(this), amount),
             "transferFrom failed"
         );
 
-        // Step 3: send - execute the cross-chain transfer
+        // Step 3: send - OFTAdapter pulls underlying token from this contract
         (MessagingReceipt memory receipt, ) = oft.send{value: fee.nativeFee}(
             sendParam,
             fee,
@@ -78,4 +92,6 @@ contract L0Transfer {
     function _addressToBytes32(address addr) internal pure returns (bytes32) {
         return bytes32(uint256(uint160(addr)));
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

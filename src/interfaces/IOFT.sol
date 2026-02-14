@@ -28,6 +28,8 @@ struct OFTReceipt {
 }
 
 interface IOFT {
+    function token() external view returns (address);
+
     function quoteSend(
         SendParam calldata _sendParam,
         bool _payInLzToken
