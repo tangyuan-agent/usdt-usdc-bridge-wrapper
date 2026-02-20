@@ -1,25 +1,25 @@
-# Circle CCTP Contract Addresses
+# Circle CCTP 合约地址
 
-> ⚠️ **Important**: These are Circle CCTP core contract addresses, verify before testing  
-> Source: Circle official docs + ethskills
+> ⚠️ **重要**: 这些是 Circle CCTP 的核心合约地址，在测试前需要验证  
+> 数据来源：Circle 官方文档 + ethskills
 
-## Core Concepts
+## 核心概念
 
-### CCTP Core Contracts
+### CCTP 核心合约
 
-1. **TokenMessenger** - User entry point
-   - `depositForBurn()` - Initiate burn, start cross-chain transfer
+1. **TokenMessenger** - 用户入口合约
+   - `depositForBurn()` - 发起 burn，开始跨链转账
    
-2. **MessageTransmitter** - Message transmission contract
-   - `receiveMessage()` - Receive attestation, complete mint
+2. **MessageTransmitter** - 消息传输合约
+   - `receiveMessage()` - 接收 attestation，完成 mint
 
-3. **TokenMinter** - USDC mint/burn contract
-   - Called by TokenMessenger
+3. **TokenMinter** - USDC 铸造/销毁合约
+   - 由 TokenMessenger 调用
 
-## Domain IDs (Chain Identifiers)
+## Domain IDs（链标识符）
 
-| Chain | Domain ID |
-|-------|----------|
+| 链 | Domain ID |
+|-----|----------|
 | Ethereum | 0 |
 | Avalanche | 1 |
 | OP Mainnet | 2 |
@@ -28,7 +28,7 @@
 | **Base** | **6** |
 | Solana | 5 |
 
-## Key Contract Addresses (Need Verification)
+## 关键合约地址（需要验证）
 
 ### Ethereum Mainnet
 ```
@@ -65,9 +65,9 @@ MessageTransmitter: 0x4D41f22c5a0e5c74090899E5a8Fb597a8842b3e8
 USDC: 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85
 ```
 
-## Usage Flow
+## 使用流程
 
-### 1. Initiate Cross-chain Transfer (Source Chain)
+### 1. 发起跨链转账（Source Chain）
 
 ```solidity
 // 1. Approve USDC to TokenMessenger
@@ -76,55 +76,55 @@ IERC20(usdc).approve(tokenMessenger, amount);
 // 2. Call depositForBurn
 uint64 nonce = ITokenMessenger(tokenMessenger).depositForBurn(
     amount,           // amount
-    destinationDomain, // destination chain domain ID
+    destinationDomain, // 目标链 domain ID
     mintRecipient,    // bytes32(uint256(uint160(recipient)))
     usdc              // USDC address
 );
 ```
 
-### 2. Get Attestation
+### 2. 获取 Attestation
 
 ```bash
 # Circle Attestation API
 curl "https://iris-api.circle.com/attestations/{messageHash}"
 ```
 
-### 3. Complete Transfer (Destination Chain)
+### 3. 完成转账（Destination Chain）
 
 ```solidity
-// Call receiveMessage with attestation
+// 使用 attestation 调用 receiveMessage
 IMessageTransmitter(messageTransmitter).receiveMessage(
-    message,      // from event
-    attestation   // from Circle API
+    message,      // 从事件中获取
+    attestation   // 从 Circle API 获取
 );
 ```
 
-## Fees
+## 手续费
 
 - **Standard Transfer**: **0 onchain fee** ✨
-- **Settlement Time**: ~13 minutes (waiting for finality + attestation)
-- **Gas Fees**: Required (Ethereum: ~$0.01, L2s: ~$0.001)
+- **到账时间**: ~13 分钟（等待 finality + attestation）
+- **Gas 费**: 需要支付（Ethereum: ~$0.01，L2s: ~$0.001）
 
-## Test Plan
+## 公共 RPC 端点
 
-1. ✅ Prepare test wallet (completed)
-2. ✅ Received test tokens (Polygon: 3 POL + 0.1 USDC)
-3. 🔲 Verify CCTP contract addresses
-4. 🔲 Test Polygon → Arbitrum USDC cross-chain
-5. 🔲 Test Arbitrum → Polygon USDC cross-chain
+| 链 | RPC URL | 状态 |
+|----|---------|------|
+| Polygon | `https://polygon-bor-rpc.publicnode.com` | ✅ 可用 |
+| Arbitrum | `https://arb1.arbitrum.io/rpc` | 待验证 |
+| Base | `https://mainnet.base.org` | 待验证 |
 
-## Public RPC Endpoints
+## 当前余额（2026-02-20）
 
-| Chain | RPC URL | Status |
-|-------|---------|--------|
-| Polygon | `https://polygon-bor-rpc.publicnode.com` | ✅ Available |
-| Arbitrum | `https://arb1.arbitrum.io/rpc` | To verify |
-| Base | `https://mainnet.base.org` | To verify |
-
-## Current Balance (2026-02-20)
-
-**Wallet Address**: `0x2E57E3427Ee766108271E9398e1049a4858CbD8f`
+**钱包地址**: `0x2E57E3427Ee766108271E9398e1049a4858CbD8f`
 
 ### Polygon
 - ✅ **POL**: 3.00003 POL
 - ✅ **USDC**: 0.1 USDC
+
+## 测试计划
+
+1. ✅ 准备测试钱包（已完成）
+2. ✅ 收到测试代币（Polygon: 3 POL + 0.1 USDC）
+3. 🔲 验证 CCTP 合约地址
+4. 🔲 测试 Polygon → Arbitrum USDC 跨链
+5. 🔲 测试 Arbitrum → Polygon USDC 跨链
