@@ -8,8 +8,8 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {IOFT, SendParam, MessagingFee, MessagingReceipt} from "./interfaces/IOFT.sol";
 
 /// @title L0BridgeWrapper - One-click LayerZero OFT cross-chain bridge (UUPS upgradeable)
-/// @notice Wraps quoteSend + send into a single call
-/// @dev Works with OFTAdapter (locks underlying token) — not a native OFT (burn/mint)
+/// @notice Wraps quoteSend + send into a single call for USDT0 bridging
+/// @dev Works with OFTAdapter (locks underlying USDT) — not CCTP (Circle) or native OFT (burn/mint)
 contract L0BridgeWrapper is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     IOFT public oft;
     IERC20 public token; // underlying ERC20 that the OFTAdapter wraps

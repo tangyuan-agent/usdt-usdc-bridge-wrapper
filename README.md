@@ -1,6 +1,9 @@
-# L0BridgeWrapper
+# usdt-usdc-bridge-wrapper
 
-One-click LayerZero OFT (USDT0) cross-chain bridge wrapper. Combines `quoteSend` + `send` into a single contract call.
+One-click cross-chain bridge wrapper for stablecoins.
+
+Currently supported:
+- **USDT0** — via LayerZero OFT (`quoteSend` + `send` combined into a single call)
 
 ## Setup
 
